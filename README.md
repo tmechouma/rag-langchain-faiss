@@ -5,7 +5,7 @@ A privacy-focused RAG pipeline that answers questions about your documents - 100
 
 *A privacy-focused RAG pipeline that answers questions about your documents - 100% offline using Zephyr-7B and FAISS*
 
-![RAG Workflow Diagram](https://github.com/yourusername/yourrepo/raw/main/assets/workflow.png)  
+![RAG Workflow Diagram](https://github.com/tmechouma/rag-langchain-faiss/blob/main/workflow.png)  
 *(Visualize the [complete workflow](#-workflow) below)*
 
 ## 🔥 Key Features
