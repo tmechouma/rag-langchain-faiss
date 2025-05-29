@@ -9,7 +9,7 @@ A privacy-focused RAG pipeline that answers questions about your documents - 100
 
 ## ⚠️ Important Setup Note
 **Before running:**  
-You must manually download the 4GB Zephyr-7B model file and put it in the model folder. Also you need to update the model's path (rag_pipeline.py) depending to where you put the repository locally.
+You must manually download the 4GB Zephyr-7B model file and put it in the model folder. Also you need to update the model's path (rag_pipeline.py) depending to where you put the repository locally. Line 66: model_path = os.path.join("D:/rag-langchain-app", "model", "zephyr-7b-beta.Q4_0.gguf").
 ## 🔥 Key Features
 - **Complete local execution** - No API calls, no data leaves your machine
 - **Multi-format support** - PDFs, TXT files (with clean text extraction)
