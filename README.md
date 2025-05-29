@@ -32,6 +32,7 @@ python>=3.9
 pip install -r requirements.txt
 ```
 ### Project structure.
+   ``` rag-langchain-app
 ├── app.py                 # Flask backend
 ├── rag_pipeline.py        # Core RAG logic
 ├── models/                # LLM storage
@@ -39,4 +40,4 @@ pip install -r requirements.txt
 ├── data/                  # Document uploads
 ├── templates/             # Web UI
 │   └── index.html
-└── requirements.txt
+└── requirements.txt     ```
