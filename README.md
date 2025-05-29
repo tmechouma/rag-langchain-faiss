@@ -6,7 +6,7 @@ A privacy-focused RAG pipeline that answers questions about your documents - 100
 *A privacy-focused RAG pipeline that answers questions about your documents - 100% offline using Zephyr-7B and FAISS*
 
 ![RAG Workflow Diagram](https://github.com/tmechouma/rag-langchain-faiss/blob/main/workflow.png)  
-*(Visualize the [complete workflow](#-workflow) below)*
+
 ## ⚠️ Important Setup Note
 **Before running:**  
 You must manually download the 4GB Zephyr-7B model file and put it in the model folder. Also you need to update the model's path (rag_pipeline.py) depending to where you put the repository locally.
