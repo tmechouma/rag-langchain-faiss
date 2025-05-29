@@ -30,3 +30,13 @@ A privacy-focused RAG pipeline that answers questions about your documents - 100
 ```bash
 python>=3.9
 pip install -r requirements.txt
+```
+### Project structure.
+├── app.py                 # Flask backend
+├── rag_pipeline.py        # Core RAG logic
+├── models/                # LLM storage
+│   └── zephyr-7b-beta.Q4_K_M.gguf
+├── data/                  # Document uploads
+├── templates/             # Web UI
+│   └── index.html
+└── requirements.txt
