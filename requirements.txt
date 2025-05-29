@@ -1,0 +1,25 @@
+# Core Requirements
+langchain==0.1.16
+langchain-community==0.0.36
+flask==3.0.3
+python-dotenv==1.0.1
+
+# Model & Embeddings
+llama-cpp-python==0.2.73  # For Zephyr-7B GGUF
+sentence-transformers==2.7.0  # all-MiniLM-L6-v2
+faiss-cpu==1.8.0  # For vector store (use faiss-gpu if CUDA available)
+
+# Document Processing
+pypdf==4.2.0
+unstructured==0.13.4
+textract==1.6.5
+
+# Utilities
+huggingface-hub==0.23.3
+numpy==1.26.4
+tqdm==4.66.2  # Progress bars
+mermaid-js==10.4.0  # For workflow diagrams in docs
+
+# Development (Optional)
+pytest==8.1.1
+black==24.3.0
