@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Document Assistant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .panel {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 70%;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        .bot-message {
+            background-color: #f1f1f1;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        #input-area {
+            display: flex;
+            gap: 10px;
+        }
+        #question-input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+        .file-list {
+            margin-top: 15px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .file-name {
+            flex-grow: 1;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+        .progress {
+            height: 10px;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Document Knowledge Assistant</h1>
+    
+    <div class="panel">
+        <h2>Upload Documents</h2>
+        <div class="upload-area" id="drop-area">
+            <p>Drag & drop PDF or TXT files here, or click to select</p>
+            <input type="file" id="file-input" accept=".pdf,.txt" style="display: none;">
+            <button onclick="document.getElementById('file-input').click()">Select Files</button>
+            <div class="progress-bar" id="progress-container" style="display: none;">
+                <div class="progress" id="progress-bar"></div>
+            </div>
+        </div>
+        
+        <div class="file-list">
+            <h3>Uploaded Files</h3>
+            <div id="file-list">
+                {% for file in files %}
+                <div class="file-item">
+                    <span class="file-name">{{ file }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <h2>Chat with Documents</h2>
+        <div class="controls">
+            <div class="control-item">
+                <label for="max-tokens">Response Length:</label>
+                <input type="range" id="max-tokens" min="100" max="2000" value="512">
+                <span id="tokens-value">512</span>
+            </div>
+            <div class="control-item">
+                <label for="temperature">Creativity:</label>
+                <input type="range" id="temperature" min="0" max="100" value="30">
+                <span id="temp-value">0.3</span>
+            </div>
+        </div>
+        
+        <div class="chat-container" id="chat-box">
+            <div class="message bot-message">
+                Hello! I'm your document assistant. Upload files first, then ask me anything about them.
+            </div>
+        </div>
+        
+        <div id="input-area">
+            <input type="text" id="question-input" placeholder="Type your question...">
+            <button onclick="sendQuestion()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Update slider values
+        document.getElementById('max-tokens').addEventListener('input', function() {
+            document.getElementById('tokens-value').textContent = this.value;
+        });
+        
+        document.getElementById('temperature').addEventListener('input', function() {
+            const temp = (this.value / 100).toFixed(1);
+            document.getElementById('temp-value').textContent = temp;
+        });
+
+        // Handle Enter key
+        document.getElementById('question-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendQuestion();
+            }
+        });
+
+        // File upload handling
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const fileList = document.getElementById('file-list');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropArea.style.borderColor = '#4CAF50';
+        }
+
+        function unhighlight() {
+            dropArea.style.borderColor = '#ccc';
+        }
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // Handle selected files
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                uploadFile(files[0]);
+            }
+        }
+
+        function uploadFile(file) {
+            if (!file.name.match(/\.(pdf|txt)$/i)) {
+                alert('Only PDF and TXT files are allowed');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressBar.style.width = percentComplete + '%';
+                }
+            });
+
+            xhr.open('POST', '/upload', true);
+            
+            progressContainer.style.display = 'block';
+            
+            xhr.onload = function() {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        // Add to file list
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item';
+                        fileItem.innerHTML = `
+                            <span class="file-name">${response.filename}</span>
+                        `;
+                        fileList.prepend(fileItem);
+                    } else {
+                        alert('Upload failed: ' + (response.error || 'Unknown error'));
+                    }
+                } else {
+                    alert('Upload failed: ' + xhr.statusText);
+                }
+            };
+            
+            xhr.send(formData);
+        }
+
+        function sendQuestion() {
+            const input = document.getElementById('question-input');
+            const question = input.value.trim();
+            if (!question) return;
+            
+            const chatBox = document.getElementById('chat-box');
+            const maxTokens = document.getElementById('max-tokens').value;
+            const temperature = (document.getElementById('temperature').value / 100).toFixed(1);
+            
+            // Add user message
+            chatBox.innerHTML += `
+                <div class="message user-message">
+                    ${question}
+                </div>
+                <div class="message bot-message" id="thinking">
+                    Thinking...
+                </div>
+            `;
+            
+            // Scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+            input.value = '';
+            
+            // Send to backend
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: question,
+                    max_tokens: maxTokens,
+                    temperature: temperature
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const thinkingElement = document.getElementById('thinking');
+                if (data.error) {
+                    thinkingElement.innerHTML = `<span style="color:red">Error: ${data.error}</span>`;
+                } else {
+                    thinkingElement.textContent = data.answer;
+                }
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(error => {
+                document.getElementById('thinking').innerHTML = 
+                    `<span style="color:red">Network error: ${error.message}</span>`;
+            });
+        }
+    </script>
+</body>
+</html>
